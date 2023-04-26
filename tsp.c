@@ -26,21 +26,44 @@ double haversine(Point pos1, Point pos2) {
 
 void define_path(Point *points, int num_points, int* path, int* visited){
     int current_point = 0;
+
     for (int i = 1; i < num_points; i++) {
         int nearest_neighbor = -1;
         double nearest_neighbor_distance = -1;
+
+        // Menentukan jarak terdekat
         for (int j = 0; j < num_points; j++) {
-                if (!visited[j]) {
+                if (!visited[j]){
                     double distance = haversine(points[current_point], points[j]);
-                    if (nearest_neighbor == -1 || distance < nearest_neighbor_distance) {
+                    if (nearest_neighbor == -1 || distance < nearest_neighbor_distance){
                         nearest_neighbor = j;
                         nearest_neighbor_distance = distance;
                     }
                 }
             }
-        current_point = nearest_neighbor;
-        visited[current_point] = 1;
-        path[i] = current_point;
+        
+        // Menyeleksi jarak agar kurang dari 2500 km
+        if(nearest_neighbor_distance < 2500){
+            current_point = nearest_neighbor;
+            visited[current_point] = 1;
+            path[i] = current_point;
+        }
+    }
+
+    // Menyeleksi jarak agar kembali ke titik awal kurang dari 2500 km
+    for (int i = num_points-1; i >= 0; i--) {
+        if (path[i] != 0)
+        {
+            double distance = haversine(points[i], points[0]);
+            if(distance < 2500)
+            {
+                break;
+            }
+            else
+            {
+                path[i] = 0;
+            }
+        }
     }
 }
 
@@ -48,51 +71,33 @@ void print_path(Point *points, int *visited, int *path, int num_points){
     printf("\nRute Pelayaran Optimal:\n");
     double total_distance = 0;
     for (int i = 0; i < num_points; i++) {
-        printf("%s -> ", points[path[i]].address);
-        if (i < num_points-1) {
+        if (path[i] != 0 || i == 0)
+        {
+            printf("%s -> ", points[path[i]].address);
             total_distance += haversine(points[path[i]], points[path[i+1]]);
-            if(haversine(points[path[i]], points[path[i+1]]) > 2500)
-            {
-                visited[i] = 0;
-            }
         }
-        else{
-            printf("%s", points[0]);
-            total_distance += haversine(points[path[i]], points[0]);
-            printf("\n\nJarak Total Rute Pelayaran: %.2lf\n", total_distance);
-
-            printf("\nPelabuhan yang tidak terjangkau \n");
-            int j = 1;
-            for (int i = 0; i < num_points; i++)
-            {
-                if(visited[i] == 0)
-                {
-                    printf("%d. %s\n", j, points[i]);
+        else {
+            printf("%s\n\n", points[path[0]].address);
+            printf("Jarak total rute pelayaran : %.2lf km \n\n", total_distance);
+            printf("Pelabuhan yang tidak terjangkau : \n");
+            for (int j = 0; j < num_points; j++) {
+                if (!visited[j]){
+                    printf("%s\n", points[j]);
                 }
             }
-            if(haversine(points[path[i]], points[0]) > 2500)
-            {
-                printf("%d. %s\n", j, points[i]);
-            }
-            
+            break;
         }
     }
 }
 
 void neirest_neighbour_tsp(Point *points, int num_points) {
-    // Array penyimpan status pelabuhan
-    int *visited = (int*)malloc(num_points*sizeof(int));
-    for (int i = 0; i < num_points; i++) {
-        visited[i] = 0;
-    }
-
-    // Inisiasi titik awal
-    int current_point = 0;
-    visited[current_point] = 1;
+    // Deklarasi array status tempat dan jalur
+    int *visited = (int*)calloc(num_points, sizeof(int));
+    int *path = (int*)calloc(num_points, sizeof(int));
     
-    // Array penyimpan data jalur yang dilalui
-    int *path = (int*)malloc(num_points*sizeof(int));
-    path[0] = current_point;
+    // Inisialisasi titik sekarang
+    visited[0] = 1;
+    path[0] = 0;
     
     // Fungsi pencari jalan
     define_path(points, num_points, path, visited);
@@ -112,7 +117,7 @@ int main() {
     int num_points = 0;
     
     // Input FILE
-    printf("Masukkan file pelabuhan: ");
+    printf("Masukkan file pelabuhan: \n");
     scanf("%s", namafile);
     
     // Membuka FILE
@@ -124,18 +129,16 @@ int main() {
 
     // Membaca FILE
     while (fgets(line, MAX_LENGTH, file) != NULL) {
-        // Skip header
         if (strstr(line, "Pelabuhan") != NULL) {
             continue;
         }
-        // Parsing setiap baris
+
         char *token = strtok(line, ",");
         Point point;
+
         strcpy(point.address, token);
-        token = strtok(NULL, ",");
-        point.x = atof(token);
-        token = strtok(NULL, ",");
-        point.y = atof(token);
+        token = strtok(NULL, ","); point.x = atof(token);
+        token = strtok(NULL, ","); point.y = atof(token);
         points = (Point*)realloc(points, (num_points+1)*sizeof(Point));
         points[num_points] = point;
         num_points++;
