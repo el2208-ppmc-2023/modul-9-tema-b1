@@ -1,3 +1,12 @@
+/*EL2208 Praktikum Pemecahan Masalah dengan C 2022/2023
+*Modul              : 9 - Tugas Besar
+*Kelompok           : B1
+*Hari dan Tanggal   : Rabu, 26/04/2023
+*Asisten (NIM)      : Muhammmad Daffa Rasyid (13220059)
+*Nama File          : Traveling Salesman Problem
+*Deskripsi          : Program menyelesaikan permasalahan Traveling Salesman Problem dengan persyaratan jarak yang ditempuh kurang dari 2500 KM
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
