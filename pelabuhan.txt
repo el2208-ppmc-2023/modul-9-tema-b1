@@ -18,4 +18,4 @@ Kota Puerto Princesa Palawan,9.9672,118.7859
 Kota Kuching Borneo,1.5497,110.3631
 Kota Phnom Penh Kerajaan Bumi,11.5564,104.9282
 Desa Full Moon Bay Kerajaan Bumi,10.6093,103.5297
-Kota Pulau Ember Langkawi,6.3500,99.8000
+Desa Pulau Ember Langkawi,6.3500,99.8000
