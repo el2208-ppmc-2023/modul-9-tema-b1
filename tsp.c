@@ -3,22 +3,8 @@
 #include <string.h>
 #include <math.h>
 
-#define MAX_LENGTH 100
-#define RADIUS 6371.0 // Radius of the Earth in kilometers
-
-double to_radians(double degrees) {
-    return degrees * 3.1415926 / 180.0;
-}
-
-double haversine(double x1, double y1, double x2, double y2) {
-    double d_x = to_radians(x2 - x1);
-    double d_y = to_radians(y2 - y1);
-    double a = sin(d_x / 2) * sin(d_x / 2) +
-               cos(to_radians(x1)) * cos(to_radians(x2)) *
-               sin(d_y / 2) * sin(d_y / 2);
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return RADIUS * c;
-}
+#define MAX_LENGTH 100 // Maksimal panjang
+#define RADIUS 6371.0 // Jari jari bumi
 
 typedef struct {
     char address[MAX_LENGTH];
@@ -26,79 +12,123 @@ typedef struct {
     double y;
 } Point;
 
-void nn_tsp(Point *points, int num_points) {
-    // Create array to store visited status of each point
-    int *visited = (int*)malloc(num_points*sizeof(int));
-    for (int i = 0; i < num_points; i++) {
-        visited[i] = 0;
-    }
-    
-    // Start at first point
+double to_radians(double degrees) {
+    return degrees * 3.1415926 / 180.0;
+}
+
+double haversine(Point pos1, Point pos2) {
+    double lat_dist = to_radians(pos2.x - pos1.x);
+    double long_dist = to_radians(pos2.y - pos1.y);
+    double a = sin(lat_dist / 2) * sin(lat_dist / 2) + cos(to_radians(pos1.x)) * cos(to_radians(pos2.x)) * sin(long_dist / 2) * sin(long_dist / 2);
+    double r = 2 * RADIUS * atan2(sqrt(a), sqrt(1 - a));
+    return r;
+}
+
+void define_path(Point *points, int num_points, int* path, int* visited){
     int current_point = 0;
-    visited[current_point] = 1;
-    
-    // Create array to store path
-    int *path = (int*)malloc(num_points*sizeof(int));
-    path[0] = current_point;
-    
-    // Visit all other points in nearest neighbor order
     for (int i = 1; i < num_points; i++) {
         int nearest_neighbor = -1;
         double nearest_neighbor_distance = -1;
         for (int j = 0; j < num_points; j++) {
-            if (!visited[j]) {
-                double d = haversine(points[current_point].x, points[current_point].y, points[j].x, points[j].y);
-                if (nearest_neighbor == -1 || d < nearest_neighbor_distance) {
-                    nearest_neighbor = j;
-                    nearest_neighbor_distance = d;
+                if (!visited[j]) {
+                    double distance = haversine(points[current_point], points[j]);
+                    if (nearest_neighbor == -1 || distance < nearest_neighbor_distance) {
+                        nearest_neighbor = j;
+                        nearest_neighbor_distance = distance;
+                    }
                 }
             }
-        }
         current_point = nearest_neighbor;
         visited[current_point] = 1;
         path[i] = current_point;
     }
-    
-    // Print path and distance
-    printf("Optimal path:\n");
+}
+
+void print_path(Point *points, int *visited, int *path, int num_points){
+    printf("\nRute Pelayaran Optimal:\n");
     double total_distance = 0;
     for (int i = 0; i < num_points; i++) {
         printf("%s -> ", points[path[i]].address);
         if (i < num_points-1) {
-            total_distance += haversine(points[path[i]].x, points[path[i]].y, points[path[i+1]].x, points[path[i+1]].y);
+            total_distance += haversine(points[path[i]], points[path[i+1]]);
+            if(haversine(points[path[i]], points[path[i+1]]) > 2500)
+            {
+                visited[i] = 0;
+            }
         }
         else{
             printf("%s", points[0]);
-            total_distance += haversine(points[path[i]].x, points[path[i]].y, points[0].x, points[0].y);
-            printf("\nTotal distance: %f\n", total_distance);
+            total_distance += haversine(points[path[i]], points[0]);
+            printf("\n\nJarak Total Rute Pelayaran: %.2lf\n", total_distance);
+
+            printf("\nPelabuhan yang tidak terjangkau \n");
+            int j = 1;
+            for (int i = 0; i < num_points; i++)
+            {
+                if(visited[i] == 0)
+                {
+                    printf("%d. %s\n", j, points[i]);
+                }
+            }
+            if(haversine(points[path[i]], points[0]) > 2500)
+            {
+                printf("%d. %s\n", j, points[i]);
+            }
+            
         }
     }
+}
+
+void neirest_neighbour_tsp(Point *points, int num_points) {
+    // Array penyimpan status pelabuhan
+    int *visited = (int*)malloc(num_points*sizeof(int));
+    for (int i = 0; i < num_points; i++) {
+        visited[i] = 0;
+    }
+
+    // Inisiasi titik awal
+    int current_point = 0;
+    visited[current_point] = 1;
     
-    // Free memory
+    // Array penyimpan data jalur yang dilalui
+    int *path = (int*)malloc(num_points*sizeof(int));
+    path[0] = current_point;
+    
+    // Fungsi pencari jalan
+    define_path(points, num_points, path, visited);
+    
+    // Fungsi print jalur, total jarak, dan pelabuhan yang tidak bisa dikunjungo
+    print_path(points, visited, path, num_points);
+
     free(visited);
     free(path);
 }
 
 int main() {
-    // Read data from file
+    // Inisialisasi
     FILE *file;
-    char line[MAX_LENGTH];
     Point *points = NULL;
+    char line[MAX_LENGTH], namafile[MAX_LENGTH];
     int num_points = 0;
     
-    file = fopen("pelabuhan.txt", "r");
+    // Input FILE
+    printf("Masukkan file pelabuhan: ");
+    scanf("%s", namafile);
+    
+    // Membuka FILE
+    file = fopen(namafile, "r");
     if (file == NULL) {
         printf("Cannot open file.\n");
         return 1;
     }
 
-    // Read file line by line
+    // Membaca FILE
     while (fgets(line, MAX_LENGTH, file) != NULL) {
         // Skip header
         if (strstr(line, "Pelabuhan") != NULL) {
             continue;
         }
-        // Parse line and store data in points array
+        // Parsing setiap baris
         char *token = strtok(line, ",");
         Point point;
         strcpy(point.address, token);
@@ -110,13 +140,11 @@ int main() {
         points[num_points] = point;
         num_points++;
     }
-    
     fclose(file);
 
-    // Solve TSP using nearest neighbor algorithm
-    nn_tsp(points, num_points);
+    // Algoritma TSP
+    neirest_neighbour_tsp(points, num_points);
 
-    // Free memory
     free(points);
     return 0;
 }
