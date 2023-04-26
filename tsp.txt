@@ -1,0 +1,112 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define _USE_MATH_DEFINES 
+#include <math.h>
+
+#define MAX_PORT 20
+#define MAX_NAME 50
+
+typedef struct {
+    char name[MAX_NAME];
+    double lat;
+    double lon;
+} port_t;
+
+double R = 6371.0; // Earth radius in kilometers
+double distance[MAX_PORT][MAX_PORT];
+int visited[MAX_PORT];
+double min_distance = INFINITY;
+int min_path[MAX_PORT];
+int path[MAX_PORT];
+int n_port = 0;
+int i,j;
+char filename[256] = "pelabuhan.txt";
+void read_ports(const char* filename, port_t* ports);
+double haversine(double lat1, double lon1, double lat2, double lon2);
+void tsp(int pos, double curr_distance);
+
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        printf("Usage: %s [filename]\n", argv[0]);
+        exit(1);
+    }
+
+    port_t ports[MAX_PORT];
+    read_ports(argv[1], ports);
+
+    // Calculate distances between ports
+    for (i = 0; i < n_port - 1; i++) {
+        for (j = i + 1; j < n_port; j++) {
+            double d = haversine(ports[i].lat, ports[i].lon, ports[j].lat, ports[j].lon);
+            distance[i][j] = d;
+            distance[j][i] = d;
+        }
+    }
+
+    // Initialize visited array
+    for (i = 0; i < n_port; i++) {
+        visited[i] = 0;
+    }
+
+    // Start TSP algorithm
+    tsp(0, 0.0);
+
+    // Print optimal path and distance
+    printf("Optimal path:\n");
+    for (i = 0; i < n_port; i++) {
+        printf("%s -> ", ports[min_path[i]].name);
+    }
+    printf("%s\n", ports[min_path[0]].name);
+    printf("Optimal distance: %.2f km\n", min_distance);
+
+    return 0;
+}
+
+void read_ports(const char* filename, port_t* ports) {
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error: Unable to open file.\n");
+        exit(1);
+    }
+
+    char line[100];
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        sscanf(line, "%[^,],%lf,%lf", ports[n_port].name, &ports[n_port].lat, &ports[n_port].lon);
+        n_port++;
+    }
+
+    fclose(fp);
+}
+double haversine(double lat1, double lon1, double lat2, double lon2) {
+    double dLat = (lat2 - lat1) * M_PI / 180.0;
+    double dLon = (lon2 - lon1) * M_PI / 180.0;
+    lat1 = lat1 * M_PI / 180.0;
+    lat2 = lat2 * M_PI / 180.0;
+
+    double a = sin(dLat / 2.0) * sin(dLat / 2.0) +
+            sin(dLon / 2.0) * sin(dLon / 2.0) * cos(lat1) * cos(lat2);
+    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
+    double d = R * c;
+
+    return d;
+}
+void tsp(int pos, double curr_distance) {
+    if (pos == n_port) {
+    // Completed a path, update optimal path and distance
+    if (curr_distance + distance[path[pos - 1]][path[0]] < min_distance) {
+    min_distance = curr_distance + distance[path[pos - 1]][path[0]];
+    memcpy(min_path, path, sizeof(int) * n_port);
+    }
+    return;
+    }
+    // Branch and bound
+    for (i = 0; i < n_port; i++) {
+        if (!visited[i]) {
+            visited[i] = 1;
+            path[pos] = i;
+            tsp(pos + 1, curr_distance + distance[path[pos - 1]][i]);
+            visited[i] = 0;
+        }
+    }
+}
