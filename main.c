@@ -126,7 +126,7 @@ int main() {
     int num_points = 0;
     
     // Input FILE
-    printf("Masukkan file pelabuhan: \n");
+    printf("Masukkan file pelabuhan: ");
     scanf("%s", namafile);
     
     // Membuka FILE
