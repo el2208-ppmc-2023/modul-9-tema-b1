@@ -7,7 +7,6 @@ TEAM B1
 2. Reyhan Ghifari Tanjung (13221014)
 3. Galih Siswandi (13221015)
 4. Azita Nadiya Noorazlina (13221017)
-5. Simbolon, Patrick Vyto P. (13221052)
 
 ### Deskripsi
 Membuat program yang dapat mencari rute terpendek yang mengunjungi seluruh pelabuhan lalu kembali lagi ke pelabuhan awal. Selain itu, program juga harus dapat menampilkan total jarak yang ditempuh kapal. Namun, karena jarak tempuh terjauh kapal adalah 2500 km, maka program juga perlu menampilkan pelabuhan yang tidak dapat dikunjungi. Program menerima masukan file `pelabuhan.csv` berupa daftar pelabuhan-pelabuhan yang akan dikunjungi. Hasil implementasi program adalah minimum cost dari seluruh kunjungan pelabuhan dan memberikan data pelabuhan mana saja yang tidak dapat dikunjungi dalam pelayaran ini.
