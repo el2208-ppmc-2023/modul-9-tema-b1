@@ -91,7 +91,7 @@ void print_path(Point *points, int *visited, int *path, int num_points){
             printf("Pelabuhan yang tidak terjangkau : \n");
             for (int j = 0; j < num_points; j++) {
                 if (!visited[j]){
-                    printf("%s\n", points[j]);
+                    printf("%s\n", points[j].address);
                 }
             }
             break;
